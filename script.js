@@ -2,59 +2,8 @@
 // KintVinylSugi - script.js
 // ======================================
 
-// todos los vinilos que hay disponibles
-var vinilos = [
-    { nombre: "Thriller", artista: "Michael Jackson" },
-    { nombre: "Me muevo como Dios", artista: "Rels B" },
-    { nombre: "Abbey Road", artista: "The Beatles" },
-    { nombre: "Un Verano Sin Ti", artista: "Bad Bunny" },
-    { nombre: "The Dark Side of the Moon", artista: "Pink Floyd" },
-    { nombre: "MOTOMAMI", artista: "Rosalía" },
-    { nombre: "Nevermind", artista: "Nirvana" },
-    { nombre: "El Madrileño", artista: "C. Tangana" },
-    { nombre: "Back in Black", artista: "AC/DC" },
-    { nombre: "YHLQMDLG", artista: "Bad Bunny" },
-    { nombre: "Rumours", artista: "Fleetwood Mac" },
-    { nombre: "Vida Cómoda", artista: "Quevedo" },
-    { nombre: "OK Computer", artista: "Radiohead" },
-    { nombre: "Bohemian Rhapsody", artista: "Queen" },
-    { nombre: "Hotel California", artista: "Eagles" },
-    { nombre: "El Último Tour Del Mundo", artista: "Bad Bunny" },
-    { nombre: "Wish You Were Here", artista: "Pink Floyd" },
-    { nombre: "Las Que No Iban a Salir", artista: "Bad Bunny" },
-    { nombre: "Led Zeppelin IV", artista: "Led Zeppelin" },
-    { nombre: "Donde Quiero Estar", artista: "Quevedo" },
-    { nombre: "Born to Run", artista: "Bruce Springsteen" },
-    { nombre: "Híbrido", artista: "Duki" },
-    { nombre: "The Wall", artista: "Pink Floyd" },
-    { nombre: "Sin Miedo (del Amor y Otros Demonios)", artista: "Kali Uchis" },
-    { nombre: "Appetite for Destruction", artista: "Guns N' Roses" },
-    { nombre: "Cosmogonía", artista: "Víctor Jara" },
-    { nombre: "Master of Puppets", artista: "Metallica" },
-    { nombre: "KG0516", artista: "Karol G" },
-    { nombre: "A Night at the Opera", artista: "Queen" },
-    { nombre: "Salvavida de Hielo", artista: "Rels B" },
-    { nombre: "In Utero", artista: "Nirvana" },
-    { nombre: "Cuando Me Siento Bien", artista: "Rels B" },
-    { nombre: "Purple Rain", artista: "Prince" },
-    { nombre: "Mañana Será Bonito", artista: "Karol G" },
-    { nombre: "The Joshua Tree", artista: "U2" },
-    { nombre: "Afrodisíaco", artista: "Rauw Alejandro" },
-    { nombre: "Paranoid", artista: "Black Sabbath" },
-    { nombre: "Vice Versa", artista: "Rauw Alejandro" },
-    { nombre: "Highway to Hell", artista: "AC/DC" },
-    { nombre: "Bzrp Music Sessions", artista: "Bizarrap" },
-    { nombre: "Sticky Fingers", artista: "The Rolling Stones" },
-    { nombre: "Nadie Sabe Lo Que Va a Pasar Mañana", artista: "Bad Bunny" },
-    { nombre: "Sgt. Pepper's", artista: "The Beatles" },
-    { nombre: "DeBí TiRAR MáS FOToS", artista: "Bad Bunny" },
-    { nombre: "Blonde on Blonde", artista: "Bob Dylan" },
-    { nombre: "Cachita", artista: "Rels B" },
-    { nombre: "Ziggy Stardust", artista: "David Bowie" },
-    { nombre: "Leyendas", artista: "Myke Towers" },
-    { nombre: "Let It Be", artista: "The Beatles" },
-    { nombre: "Mientras No Nos Vemos", artista: "Omar Montes" },
-];
+// los vinilos ya vienen del php (json_encode) en el index.php
+// aqui solo uso la variable "vinilos" que ya existe
 
 // variables para guardar la seleccion
 var viniloA = null;
@@ -245,17 +194,14 @@ window.onscroll = function () {
     }
 
     // revelar la imagen de fondo del hero al hacer scroll
-    // calculamos cuanto hemos scrolleado dentro del hero-wrapper
     var wrapperTop = heroWrapper.offsetTop;
     var wrapperHeight = heroWrapper.offsetHeight;
     var heroHeight = window.innerHeight;
     var scrollEnHero = window.scrollY - wrapperTop;
 
-    // la imagen se revela entre 0 y la mitad del wrapper extra
     var scrollMax = wrapperHeight - heroHeight;
     if (scrollMax > 0) {
         var progreso = scrollEnHero / scrollMax;
-        // limitar entre 0 y 1
         if (progreso < 0) progreso = 0;
         if (progreso > 1) progreso = 1;
         heroBg.style.opacity = progreso;
@@ -270,5 +216,105 @@ function suscribir() {
     } else {
         alert("Gracias por suscribirte! " + email);
         document.getElementById("emailInput").value = "";
+    }
+}
+
+// ---- CONFIGURADOR ----
+
+function cerrarModal() {
+    var modal = document.getElementById("modalConfig");
+    modal.style.display = "none";
+    document.getElementById("btnEditar").classList.add("visible");
+    document.body.style.overflow = "";
+}
+
+function abrirModal() {
+    var modal = document.getElementById("modalConfig");
+    modal.style.display = "flex";
+    document.getElementById("btnEditar").classList.remove("visible");
+    document.body.style.overflow = "hidden";
+}
+
+window.addEventListener("load", function () {
+    abrirModal();
+});
+
+function subirLogo(e) {
+    var file = e.target.files[0];
+    if (!file) return;
+    var reader = new FileReader();
+    reader.onload = function (ev) {
+        var src = ev.target.result;
+        var prev = document.getElementById("logoPreview");
+        prev.src = src;
+        prev.style.display = "block";
+        document.getElementById("logoDropTxt").textContent = file.name;
+        var headerImg = document.getElementById("headerLogoImg");
+        var headerText = document.getElementById("headerLogoText");
+        headerImg.src = src;
+        headerImg.style.display = "inline-block";
+        headerText.style.display = "none";
+    };
+    reader.readAsDataURL(file);
+}
+
+// estas funciones usan las variables nombreDefecto y descDefecto
+// que vienen del php en el index.php
+function actualizarNombre(val) {
+    var nombre = val.trim() || nombreDefecto;
+    document.getElementById("headerLogoText").innerHTML = nombre;
+    document.getElementById("footerNombre").innerHTML = nombre;
+}
+
+function actualizarDesc(val) {
+    document.getElementById("heroDesc").textContent = val || descDefecto;
+}
+
+function toggleSeccion(seccionId, navIds, visible) {
+    var el = document.getElementById(seccionId);
+    if (el) el.style.display = visible ? "" : "none";
+    for (var i = 0; i < navIds.length; i++) {
+        var n = document.getElementById(navIds[i]);
+        if (n) n.style.display = visible ? "" : "none";
+    }
+}
+
+function actualizarColor(val) {
+    document.documentElement.style.setProperty("--color-principal", val);
+    document.documentElement.style.setProperty("--color-principal-hover", aclarar(val, 20));
+    document.getElementById("colorHex").textContent = val;
+}
+
+// esta funcion la busque en internet para aclarar el color del hover
+function aclarar(hex, cantidad) {
+    var r = Math.min(255, parseInt(hex.slice(1, 3), 16) + cantidad);
+    var g = Math.min(255, parseInt(hex.slice(3, 5), 16) + cantidad);
+    var b = Math.min(255, parseInt(hex.slice(5, 7), 16) + cantidad);
+    return "#" + r.toString(16).padStart(2, "0") + g.toString(16).padStart(2, "0") + b.toString(16).padStart(2, "0");
+}
+
+var fuentesCargadas = { "Inter": true };
+
+function actualizarFuente(fuente) {
+    if (!fuentesCargadas[fuente]) {
+        var link = document.createElement("link");
+        link.rel = "stylesheet";
+        link.href = "https://fonts.googleapis.com/css2?family=" + encodeURIComponent(fuente) + ":wght@300;400;500;600;700;800;900&display=swap";
+        document.head.appendChild(link);
+        fuentesCargadas[fuente] = true;
+    }
+    document.documentElement.style.setProperty("--fuente-texto", "'" + fuente + "', sans-serif");
+}
+
+function setModo(modo) {
+    document.getElementById("modoHidden").value = modo;
+    if (modo == "claro") {
+        document.body.classList.add("modo-claro");
+        document.getElementById("btnClaro").classList.add("activo");
+        document.getElementById("btnOscuro").classList.remove("activo");
+    } else {
+        document.body.classList.remove("modo-claro");
+        document.getElementById("btnOscuro").classList.add("activo");
+        document.getElementById("btnClaro").classList.remove("activo");
     }
 }

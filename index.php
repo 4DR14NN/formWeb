@@ -1,4 +1,105 @@
 <?php
+session_start();
+
+// si no hay sesion lo mando al login
+if (!isset($_SESSION['logueado']) || $_SESSION['logueado'] != true) {
+  header("Location: login.php");
+  exit;
+}
+
+// si se ha enviado el formulario del configurador guardo todo en la sesion
+if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+  // guardo cada campo del formulario en una variable de sesion
+  // asi cuando recargue la pagina se mantienen los valores
+  $_SESSION['colorPrincipal'] = $_POST['colorPrincipal'];
+  $_SESSION['fuente'] = $_POST['fuente'];
+  $_SESSION['modo'] = $_POST['modo'];
+  $_SESSION['nombreEmpresa'] = $_POST['nombreEmpresa'];
+  $_SESSION['descripcion'] = $_POST['descripcion'];
+
+  // uso isset para ver si vienen o no
+  if (isset($_POST['chkConcepto'])) {
+    $_SESSION['chkConcepto'] = true;
+  } else {
+    $_SESSION['chkConcepto'] = false;
+  }
+  if (isset($_POST['chkGaleria'])) {
+    $_SESSION['chkGaleria'] = true;
+  } else {
+    $_SESSION['chkGaleria'] = false;
+  }
+  if (isset($_POST['chkTaller'])) {
+    $_SESSION['chkTaller'] = true;
+  } else {
+    $_SESSION['chkTaller'] = false;
+  }
+  if (isset($_POST['chkContacto'])) {
+    $_SESSION['chkContacto'] = true;
+  } else {
+    $_SESSION['chkContacto'] = false;
+  }
+}
+
+// ahora leo de la sesion los valores que tengo guardados
+// si no hay nada guardado pongo un valor por defecto
+
+// color
+if (isset($_SESSION['colorPrincipal'])) {
+  $colorSesion = $_SESSION['colorPrincipal'];
+} else {
+  $colorSesion = "#d4af37";
+}
+
+// fuente
+if (isset($_SESSION['fuente'])) {
+  $fuenteSesion = $_SESSION['fuente'];
+} else {
+  $fuenteSesion = "Inter";
+}
+
+// modo oscuro o claro
+if (isset($_SESSION['modo'])) {
+  $modoSesion = $_SESSION['modo'];
+} else {
+  $modoSesion = "oscuro";
+}
+
+// nombre de la empresa (puede estar vacio)
+if (isset($_SESSION['nombreEmpresa'])) {
+  $nombreSesion = $_SESSION['nombreEmpresa'];
+} else {
+  $nombreSesion = "";
+}
+
+// descripcion (puede estar vacia)
+if (isset($_SESSION['descripcion'])) {
+  $descSesion = $_SESSION['descripcion'];
+} else {
+  $descSesion = "";
+}
+
+// secciones visibles - si no esta guardado en sesion pongo true por defecto
+if (isset($_SESSION['chkConcepto'])) {
+  $verConcepto = $_SESSION['chkConcepto'];
+} else {
+  $verConcepto = true;
+}
+if (isset($_SESSION['chkGaleria'])) {
+  $verGaleria = $_SESSION['chkGaleria'];
+} else {
+  $verGaleria = true;
+}
+if (isset($_SESSION['chkTaller'])) {
+  $verTaller = $_SESSION['chkTaller'];
+} else {
+  $verTaller = true;
+}
+if (isset($_SESSION['chkContacto'])) {
+  $verContacto = $_SESSION['chkContacto'];
+} else {
+  $verContacto = true;
+}
+
 // Datos que uso en varias partes de la pagina.
 // Los dejo arriba porque asi no tengo que buscar por todo el html si cambio algo.
 $nombre_empresa = "KintVinylSugi™";
@@ -88,1249 +189,34 @@ $hot_ventas = array(
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link id="fontLink"
-    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
+    href="https://fonts.googleapis.com/css2?family=<?php echo urlencode($fuenteSesion); ?>:wght@300;400;500;600;700;800;900&display=swap"
     rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
   <style>
     :root {
-      --color-principal: #d4af37;
-      --color-principal-hover: #e8c84a;
-      --fuente-texto: 'Inter', 'Segoe UI', Arial, sans-serif;
-
-      --bg-body: #000;
-      --bg-card: #0a0a0a;
-      --bg-card-2: #111;
-      --bg-header: rgba(0, 0, 0, 0.9);
-      --border: rgba(255, 255, 255, 0.06);
-      --txt-1: #fff;
-      --txt-2: #888;
-      --txt-3: #666;
-      --txt-4: #555;
-      --txt-5: #444;
-      --txt-6: #333;
-    }
-
-    /* modo claro - lo añadi cuando aprendi las variables css */
-    body.modo-claro {
-      --bg-body: #f5f4f0;
-      --bg-card: #ebebeb;
-      --bg-card-2: #e0dfd9;
-      --bg-header: rgba(245, 244, 240, 0.95);
-      --border: rgba(0, 0, 0, 0.08);
-      --txt-1: #111;
-      --txt-2: #555;
-      --txt-3: #777;
-      --txt-4: #888;
-      --txt-5: #aaa;
-      --txt-6: #bbb;
-    }
-
-    *,
-    *::before,
-    *::after {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
-    html {
-      scroll-behavior: smooth;
-    }
-
-    body {
-      font-family: var(--fuente-texto);
-      background-color: var(--bg-body);
-      color: var(--txt-1);
-      line-height: 1.6;
-      overflow-x: hidden;
-    }
-
-    a {
-      text-decoration: none;
-      color: inherit;
-    }
-
-    /* === MODAL DEL CONFIGURADOR === */
-    .modal-overlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      z-index: 99999;
-      background: rgba(0, 0, 0, 0.85);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-    }
-
-    .modal-overlay.oculto {
-      display: none;
-    }
-
-    .modal-caja {
-      background: #1a1a1a;
-      border: 2px solid var(--color-principal);
-      width: 100%;
-      max-width: 960px;
-      max-height: 90vh;
-      overflow-y: auto;
-    }
-
-    .modal-head {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 22px 36px;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-    }
-
-    .modal-head-izq {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-    }
-
-    .modal-badge {
-      background: var(--color-principal);
-      color: #000;
-      font-size: 0.6em;
-      font-weight: 800;
-      letter-spacing: 2px;
-      text-transform: uppercase;
-      padding: 4px 10px;
-    }
-
-    .modal-titulo {
-      font-size: 1em;
-      font-weight: 700;
-      color: #fff;
-    }
-
-    .modal-subtitulo {
-      font-size: 0.75em;
-      color: #666;
-      margin-top: 2px;
-    }
-
-    .modal-btn-ver {
-      padding: 11px 28px;
-      background: var(--color-principal);
-      color: #000;
-      border: none;
-      font-weight: 700;
-      font-size: 0.85em;
-      letter-spacing: 0.5px;
-      cursor: pointer;
-      font-family: var(--fuente-texto);
-      white-space: nowrap;
-    }
-
-    .modal-btn-ver:hover {
-      background: var(--color-principal-hover);
-    }
-
-    .config-cuerpo {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-    }
-
-    .config-grupo {
-      padding: 28px 40px;
-      border-right: 1px solid var(--border);
-    }
-
-    .config-grupo:last-child {
-      border-right: none;
-    }
-
-    .config-grupo-tit {
-      font-size: 0.62em;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 2px;
-      color: var(--color-principal);
-      margin-bottom: 20px;
-    }
-
-    .config-campo {
-      margin-bottom: 16px;
-    }
-
-    .config-campo label {
-      display: block;
-      font-size: 0.72em;
-      color: var(--txt-2);
-      margin-bottom: 6px;
-      font-weight: 500;
-    }
-
-    .config-campo input[type="text"],
-    .config-campo textarea,
-    .config-campo select {
-      width: 100%;
-      padding: 9px 12px;
-      background: var(--bg-card-2);
-      border: 1px solid var(--border);
-      color: var(--txt-1);
-      font-family: var(--fuente-texto);
-      font-size: 0.83em;
-      outline: none;
-      resize: none;
-    }
-
-    .config-campo input[type="text"]:focus {
-      border-color: var(--color-principal);
-    }
-
-    .config-campo textarea:focus {
-      border-color: var(--color-principal);
-    }
-
-    .config-campo select:focus {
-      border-color: var(--color-principal);
-    }
-
-    .config-campo textarea {
-      height: 65px;
-    }
-
-    .config-campo select option {
-      background: #111;
-    }
-
-    .logo-drop {
-      border: 1px dashed #555;
-      padding: 14px;
-      text-align: center;
-      cursor: pointer;
-    }
-
-    body.modo-claro .logo-drop {
-      border-color: #999;
-    }
-
-    .logo-drop:hover {
-      border-color: var(--color-principal);
-    }
-
-    .logo-drop input[type="file"] {
-      width: 100%;
-      font-size: 0.75em;
-      margin-bottom: 8px;
-      cursor: pointer;
-    }
-
-    .logo-drop img {
-      max-height: 42px;
-      max-width: 100%;
-      display: none;
-      margin: 0 auto 6px;
-    }
-
-    .logo-drop p {
-      font-size: 0.72em;
-      color: var(--txt-3);
-    }
-
-    .check-item {
-      display: block;
-      margin-bottom: 14px;
-      cursor: pointer;
-    }
-
-    .check-item input[type="checkbox"] {
-      width: 15px;
-      height: 15px;
-      accent-color: var(--color-principal);
-      cursor: pointer;
-      margin-right: 8px;
-    }
-
-    .check-item span {
-      font-size: 0.85em;
-      color: var(--txt-2);
-    }
-
-    .color-wrap {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .color-wrap input[type="color"] {
-      width: 45px;
-      height: 35px;
-      border: 1px solid var(--border);
-      background: var(--bg-card-2);
-      cursor: pointer;
-      padding: 2px;
-    }
-
-    .color-hex {
-      font-size: 0.8em;
-      color: var(--txt-2);
-      font-family: monospace;
-    }
-
-    .modo-toggle {
-      display: flex;
-      border: 1px solid var(--border);
-    }
-
-    .modo-btn {
-      width: 50%;
-      padding: 8px 12px;
-      background: transparent;
-      border: none;
-      color: var(--txt-3);
-      font-size: 0.78em;
-      font-weight: 500;
-      cursor: pointer;
-      font-family: var(--fuente-texto);
-    }
-
-    .modo-btn.activo {
-      background: var(--color-principal);
-      color: #000;
-      font-weight: 700;
-    }
-
-    /* boton para volver a abrir el configurador */
-    .btn-editar {
-      position: fixed;
-      bottom: 28px;
-      right: 28px;
-      z-index: 1500;
-      width: 48px;
-      height: 48px;
-      background: var(--color-principal);
-      color: #000;
-      border: none;
-      border-radius: 50%;
-      font-size: 1.2em;
-      cursor: pointer;
-      display: none;
-    }
-
-    .btn-editar.visible {
-      display: block;
-    }
-
-    .btn-editar:hover {
-      background: var(--color-principal-hover);
-    }
-
-    /* === HEADER === */
-    header {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      z-index: 999;
-      background-color: var(--bg-header);
-      border-bottom: 1px solid var(--border);
-    }
-
-    .header-inner {
-      max-width: 1400px;
-      margin: 0 auto;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 18px 40px;
-    }
-
-    .logo a {
-      font-size: 1.2em;
-      font-weight: 700;
-      color: var(--txt-1);
-    }
-
-    .logo .tm {
-      font-size: 0.6em;
-      color: var(--color-principal);
-    }
-
-    .logo-img-header {
-      max-height: 34px;
-      max-width: 130px;
-      display: none;
-    }
-
-    nav {
-      display: flex;
-      gap: 32px;
-    }
-
-    nav a {
-      font-size: 0.85em;
-      font-weight: 400;
-      color: var(--txt-3);
-    }
-
-    nav a:hover {
-      color: var(--txt-1);
-    }
-
-    .header-icons {
-      display: none;
-    }
-
-    .menu-btn {
-      background: none;
-      border: none;
-      cursor: pointer;
-      padding: 5px;
-    }
-
-    .menu-btn span {
-      display: block;
-      width: 22px;
-      height: 2px;
-      background-color: var(--txt-1);
-      margin-bottom: 4px;
-    }
-
-    .menu-movil {
-      display: none;
-      padding: 20px 40px 30px;
-      border-top: 1px solid var(--border);
-    }
-
-    .menu-movil a {
-      display: block;
-      font-size: 1.1em;
-      color: var(--txt-2);
-      margin-bottom: 15px;
-    }
-
-    .menu-movil a:hover {
-      color: var(--txt-1);
-    }
-
-    .menu-movil.abierto {
-      display: block;
-    }
-
-    /* === HERO === */
-    .hero-wrapper {
-      height: 200vh;
-      position: relative;
-    }
-
-    .hero {
-      position: sticky;
-      top: 0;
-      height: 100vh;
-      overflow: hidden;
-    }
-
-    .hero-bg {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background-image: url('hero-bg.png');
-      background-size: cover;
-      background-position: center;
-      opacity: 0;
-      z-index: 1;
-    }
-
-    .hero-inner {
-      position: relative;
-      z-index: 2;
-      height: 100%;
-      display: flex;
-      align-items: center;
-      padding: 0 40px;
-      max-width: 1400px;
-      margin: 0 auto;
-    }
-
-    .hero-content {
-      max-width: 700px;
-    }
-
-    .hero-tag {
-      font-size: 0.8em;
-      color: var(--color-principal);
-      text-transform: uppercase;
-      margin-bottom: 24px;
-      font-weight: 500;
-    }
-
-    .hero-titulo {
-      font-size: 5.5em;
-      font-weight: 800;
-      line-height: 1.05;
-      margin-bottom: 24px;
-    }
-
-    .hero-accent {
-      color: var(--color-principal);
-    }
-
-    .hero-desc {
-      font-family: var(--fuente-texto);
-      font-size: 1.1em;
-      color: var(--txt-2);
-      margin-bottom: 40px;
-      line-height: 1.7;
-      max-width: 440px;
-    }
-
-    .hero-btn {
-      display: inline-block;
-      padding: 14px 36px;
-      background-color: var(--color-principal);
-      color: #000;
-      font-weight: 600;
-      font-size: 0.9em;
-    }
-
-    .hero-btn:hover {
-      background-color: var(--color-principal-hover);
-    }
-
-    /* === MARQUEE === */
-    .marquee-wrapper {
-      overflow: hidden;
-      background-color: var(--color-principal);
-      padding: 14px 0;
-    }
-
-    .marquee-track {
-      display: flex;
-      white-space: nowrap;
-    }
-
-    .marquee-track span {
-      color: #000;
-      font-size: 0.8em;
-      font-weight: 700;
-      text-transform: uppercase;
-      padding-right: 10px;
-    }
-
-    .seccion-tag {
-      font-size: 0.75em;
-      color: var(--color-principal);
-      text-transform: uppercase;
-      font-weight: 500;
-      margin-bottom: 10px;
-    }
-
-    .seccion-titulo {
-      font-size: 3em;
-      font-weight: 800;
-      margin-bottom: 16px;
-    }
-
-    /* === CONCEPTO === */
-    .seccion-concepto {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 100px 40px;
-    }
-
-    .concepto-header {
-      margin-bottom: 60px;
-    }
-
-    .concepto-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 30px;
-      margin-bottom: 80px;
-    }
-
-    .concepto-bloque {
-      background-color: var(--bg-card);
-      border: 1px solid var(--border);
-      padding: 40px 30px;
-    }
-
-    .concepto-bloque:hover {
-      border-color: var(--color-principal);
-    }
-
-    .concepto-bloque h3 {
-      font-size: 1.1em;
-      font-weight: 600;
-      margin-bottom: 16px;
-      color: var(--color-principal);
-    }
-
-    .concepto-bloque p {
-      font-family: var(--fuente-texto);
-      color: var(--txt-2);
-      font-size: 0.95em;
-      line-height: 1.7;
-    }
-
-    .concepto-bloque.destacado {
-      background-color: var(--color-principal);
-      border-color: var(--color-principal);
-    }
-
-    .concepto-bloque.destacado h3 {
-      color: #000;
-    }
-
-    .concepto-bloque.destacado p {
-      color: #333;
-    }
-
-    .concepto-bloque.destacado em {
-      font-weight: 600;
-    }
-
-    .origen-bloque {
-      background-color: var(--bg-card);
-      border: 1px solid var(--border);
-      padding: 60px;
-      border-left: 4px solid var(--color-principal);
-    }
-
-    .origen-bloque .seccion-tag {
-      margin-bottom: 12px;
-    }
-
-    .origen-bloque h3 {
-      font-size: 1.8em;
-      font-weight: 700;
-      margin-bottom: 20px;
-    }
-
-    .origen-bloque p {
-      font-family: var(--fuente-texto);
-      color: var(--txt-2);
-      font-size: 1em;
-      line-height: 1.8;
-      max-width: 700px;
-    }
-
-    /* === HOT VENTAS === */
-    .seccion-hot {
-      padding: 100px 40px;
-      background-color: var(--bg-card);
-    }
-
-    .hot-header {
-      max-width: 1200px;
-      margin: 0 auto 50px;
-    }
-
-    .hot-sub {
-      color: var(--txt-3);
-      font-size: 0.95em;
-    }
-
-    .hot-slider-wrapper {
-      max-width: 1400px;
-      margin: 0 auto;
-      display: flex;
-      align-items: center;
-      gap: 15px;
-    }
-
-    .hot-slider {
-      display: flex;
-      gap: 20px;
-      overflow-x: auto;
-      padding: 20px 0;
-    }
-
-    .slider-btn {
-      width: 44px;
-      height: 44px;
-      border: 1px solid var(--border);
-      background: transparent;
-      color: var(--txt-1);
-      font-size: 1.1em;
-      cursor: pointer;
-    }
-
-    .slider-btn:hover {
-      border-color: var(--color-principal);
-    }
-
-    .producto-card {
-      min-width: 280px;
-      background-color: var(--bg-card-2);
-      border: 1px solid var(--border);
-      padding: 30px 24px;
-      position: relative;
-      cursor: pointer;
-    }
-
-    .producto-card:hover {
-      border-color: var(--color-principal);
-    }
-
-    .producto-badge {
-      position: absolute;
-      top: 16px;
-      right: 16px;
-      font-size: 0.7em;
-      font-weight: 700;
-      color: var(--color-principal);
-    }
-
-    .producto-visual {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin-bottom: 24px;
-      padding: 20px 0;
-    }
-
-    .prod-medio {
-      width: 80px;
-      height: 80px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 0.5em;
-      font-weight: 600;
-      text-align: center;
-      padding: 8px;
-      color: #ccc;
-      text-transform: uppercase;
-    }
-
-    .prod-izq {
-      background: #1a1a1a;
-      clip-path: inset(0 50% 0 0);
-      margin-right: -2px;
-    }
-
-    .prod-der {
-      background: #2a2a2a;
-      clip-path: inset(0 0 0 50%);
-      margin-left: -2px;
-    }
-
-    .prod-oro {
-      width: 4px;
-      height: 80px;
-      background: var(--color-principal);
-      z-index: 2;
-    }
-
-    .producto-info h3 {
-      font-size: 0.95em;
-      font-weight: 600;
-      margin-bottom: 6px;
-      line-height: 1.4;
-    }
-
-    .producto-artistas {
-      color: var(--txt-3);
-      font-size: 0.8em;
-      margin-bottom: 12px;
-    }
-
-    .producto-precio {
-      color: var(--color-principal);
-      font-size: 1.1em;
-      font-weight: 700;
-    }
-
-    /* === FRASE CTA === */
-    .seccion-frase {
-      background-color: var(--color-principal);
-      padding: 100px 40px;
-      text-align: center;
-    }
-
-    .frase-contenido p {
-      font-size: 2.2em;
-      font-weight: 700;
-      color: #000;
-      max-width: 700px;
-      margin: 0 auto 30px;
-      line-height: 1.2;
-    }
-
-    .frase-btn {
-      display: inline-block;
-      padding: 14px 36px;
-      background-color: #000;
-      color: var(--color-principal);
-      font-weight: 600;
-      font-size: 0.9em;
-    }
-
-    .frase-btn:hover {
-      background-color: #111;
-    }
-
-    /* === TALLER === */
-    .seccion-taller {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 100px 40px;
-    }
-
-    .taller-header {
-      margin-bottom: 50px;
-    }
-
-    .taller-sub {
-      color: var(--txt-3);
-      font-size: 0.95em;
-    }
-
-    .buscador-wrap {
-      margin-bottom: 30px;
-    }
-
-    #buscador {
-      width: 100%;
-      padding: 16px 20px;
-      font-size: 0.95em;
-      font-family: var(--fuente-texto);
-      border: 1px solid var(--border);
-      background-color: var(--bg-card);
-      color: var(--txt-1);
-      outline: none;
-    }
-
-    #buscador:focus {
-      border-color: var(--color-principal);
-    }
-
-    #buscador::placeholder {
-      color: var(--txt-5);
-    }
-
-    .vinilos-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-      gap: 12px;
-      margin-bottom: 50px;
-      max-height: 420px;
-      overflow-y: auto;
-      padding: 10px;
-      border: 1px solid var(--border);
-      background-color: var(--bg-card);
-    }
-
-    .vinilo-card {
-      background-color: var(--bg-card-2);
-      border: 1px solid var(--border);
-      padding: 16px 12px;
-      text-align: center;
-      cursor: pointer;
-    }
-
-    .vinilo-card:hover {
-      border-color: var(--color-principal);
-    }
-
-    .vinilo-card .disco-icono {
-      font-size: 1.8em;
-      margin-bottom: 8px;
-    }
-
-    .vinilo-card .vinilo-nombre {
-      font-size: 0.78em;
-      font-weight: 600;
-      margin-bottom: 4px;
-      color: var(--txt-1);
-    }
-
-    .vinilo-card .vinilo-artista {
-      font-size: 0.7em;
-      color: var(--txt-3);
-    }
-
-    .vinilo-card.seleccionado-a {
-      border-color: var(--color-principal);
-      background-color: #1a1710;
-    }
-
-    .vinilo-card.seleccionado-b {
-      border-color: #f5d76e;
-      background-color: #1a1710;
-    }
-
-    .seleccion-area {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 30px;
-      margin-bottom: 40px;
-    }
-
-    .sel-box {
-      background-color: var(--bg-card);
-      border: 1px solid var(--border);
-      padding: 30px 35px;
-      min-width: 220px;
-      text-align: center;
-      position: relative;
-    }
-
-    .sel-label {
-      position: absolute;
-      top: 12px;
-      left: 16px;
-      font-size: 0.65em;
-      font-weight: 700;
-      color: var(--color-principal);
-    }
-
-    .sel-a {
-      border-color: var(--color-principal);
-    }
-
-    .sel-b {
-      border-color: #f5d76e;
-    }
-
-    .sel-nombre {
-      font-weight: 600;
-      font-size: 0.95em;
-      margin-bottom: 4px;
-    }
-
-    .sel-artista {
-      color: var(--txt-3);
-      font-size: 0.8em;
-    }
-
-    .sel-union {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .sel-oro-line {
-      width: 3px;
-      height: 30px;
-      background: var(--color-principal);
-    }
-
-    #btnUnir {
-      padding: 14px 28px;
-      background: var(--color-principal);
-      color: #000;
-      border: none;
-      font-family: var(--fuente-texto);
-      font-size: 0.8em;
-      font-weight: 700;
-      cursor: pointer;
-    }
-
-    #btnUnir:hover:not(:disabled) {
-      background: var(--color-principal-hover);
-    }
-
-    #btnUnir:disabled {
-      background: var(--bg-card-2);
-      color: var(--txt-4);
-      cursor: not-allowed;
-    }
-
-    .resultado {
-      text-align: center;
-      padding: 50px 40px;
-      background-color: var(--bg-card);
-      border: 1px solid var(--color-principal);
-      overflow: hidden;
-    }
-
-    .resultado h3 {
-      font-size: 1.5em;
-      font-weight: 700;
-      color: var(--color-principal);
-      margin-bottom: 30px;
-    }
-
-    .res-escenario {
-      text-align: center;
-      margin-bottom: 30px;
-      height: 220px;
-    }
-
-    .res-spinner {
-      position: relative;
-      width: 200px;
-      height: 200px;
-      margin: auto;
-    }
-
-    .res-mitad {
-      position: absolute;
-      top: 0;
-      width: 100px;
-      height: 200px;
-      overflow: hidden;
-      opacity: 0;
-    }
-
-    .res-mitad-izq {
-      left: 0;
-    }
-
-    .res-mitad-der {
-      right: 0;
-    }
-
-    .res-mitad.visible {
-      opacity: 1;
-    }
-
-    .res-disco {
-      width: 200px;
-      height: 200px;
-      border-radius: 50%;
-      background: #111;
-      border: 10px solid #222;
-      position: relative;
-    }
-
-    .res-mitad-izq .res-disco {
-      position: absolute;
-      left: 0;
-      top: 0;
-    }
-
-    .res-mitad-der .res-disco {
-      position: absolute;
-      right: 0;
-      top: 0;
-    }
-
-    .res-surcos {
-      position: absolute;
-      top: 35px;
-      left: 35px;
-      width: 110px;
-      height: 110px;
-      border: 2px solid #333;
-      border-radius: 50%;
-    }
-
-    .res-label {
-      position: absolute;
-      top: 60px;
-      left: 60px;
-      width: 60px;
-      height: 60px;
-      border-radius: 50%;
-      font-size: 0.5em;
-      font-weight: 700;
-      text-align: center;
-      padding: 12px 4px 4px 4px;
-      color: #fff;
-      text-transform: uppercase;
-      overflow: hidden;
-    }
-
-    .res-label-a {
-      background: #8b4513;
-    }
-
-    .res-label-b {
-      background: #2c1d4e;
-    }
-
-    .res-kintsugi {
-      position: absolute;
-      top: 0;
-      left: 98px;
-      width: 6px;
-      height: 200px;
-      background: var(--color-principal);
-      opacity: 0;
-    }
-
-    .res-kintsugi.visible {
-      opacity: 1;
-    }
-
-    .res-grieta {
-      display: none;
-    }
-
-    #resultadoTexto {
-      color: var(--txt-2);
-      font-size: 1em;
-      margin-bottom: 8px;
-    }
-
-    .resultado-precio {
-      color: var(--color-principal);
-      font-size: 1.4em;
-      font-weight: 700;
-      margin-bottom: 20px;
-    }
-
-    #btnReset {
-      padding: 12px 30px;
-      background: transparent;
-      color: var(--txt-1);
-      border: 1px solid var(--border);
-      font-family: var(--fuente-texto);
-      font-size: 0.85em;
-      font-weight: 500;
-      cursor: pointer;
-    }
-
-    #btnReset:hover {
-      border-color: var(--color-principal);
-    }
-
-    /* === NEWSLETTER === */
-    .seccion-newsletter {
-      padding: 80px 40px;
-      background-color: var(--bg-card);
-      border-top: 1px solid var(--border);
-    }
-
-    .newsletter-inner {
-      max-width: 600px;
-      margin: 0 auto;
-      text-align: center;
-    }
-
-    .newsletter-inner h3 {
-      font-size: 1.4em;
-      font-weight: 700;
-      margin-bottom: 10px;
-    }
-
-    .newsletter-inner>p {
-      color: var(--txt-3);
-      font-size: 0.9em;
-      margin-bottom: 30px;
-    }
-
-    .newsletter-form {
-      display: flex;
-      border: 1px solid var(--border);
-    }
-
-    .newsletter-form input {
-      width: 100%;
-      padding: 14px 20px;
-      background: transparent;
-      border: none;
-      color: var(--txt-1);
-      font-family: var(--fuente-texto);
-      font-size: 0.9em;
-      outline: none;
-    }
-
-    .newsletter-form input::placeholder {
-      color: var(--txt-5);
-    }
-
-    .newsletter-form button {
-      padding: 14px 24px;
-      background-color: var(--color-principal);
-      border: none;
-      color: #000;
-      font-size: 1.1em;
-      font-weight: 700;
-      cursor: pointer;
-    }
-
-    .newsletter-form button:hover {
-      background-color: var(--color-principal-hover);
-    }
-
-    /* === FOOTER === */
-    footer {
-      border-top: 1px solid var(--border);
-      padding: 0;
-    }
-
-    .footer-grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 40px;
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 60px 40px;
-    }
-
-    .footer-col h4 {
-      font-size: 0.8em;
-      font-weight: 700;
-      text-transform: uppercase;
-      color: var(--txt-1);
-      margin-bottom: 16px;
-    }
-
-    .footer-col p {
-      display: block;
-      color: var(--txt-4);
-      font-size: 0.85em;
-      margin-bottom: 8px;
-    }
-
-    .footer-col a {
-      display: block;
-      color: var(--txt-4);
-      font-size: 0.85em;
-      margin-bottom: 8px;
-    }
-
-    .footer-col a:hover {
-      color: var(--color-principal);
-    }
-
-    .footer-redes {
-      display: flex;
-      gap: 14px;
-    }
-
-    .footer-redes a {
-      color: var(--txt-4);
-      display: flex;
-    }
-
-    .footer-redes a:hover {
-      color: var(--color-principal);
-    }
-
-    .footer-bottom {
-      text-align: center;
-      padding: 20px 40px;
-      border-top: 1px solid var(--border);
-    }
-
-    .footer-bottom p {
-      color: var(--txt-6);
-      font-size: 0.75em;
+      --color-principal: <?php echo htmlspecialchars($colorSesion); ?>;
+      --fuente-texto: '<?php echo htmlspecialchars($fuenteSesion); ?>', sans-serif;
     }
   </style>
 </head>
 
-<body>
+<body class="<?php echo $modoSesion === 'claro' ? 'modo-claro' : ''; ?>">
 
   <!-- MODAL CONFIGURADOR -->
   <div class="modal-overlay oculto" id="modalConfig">
     <div class="modal-caja">
+      <form method="POST" action="index.php">
       <div class="modal-head">
         <div class="modal-head-izq">
           <span class="modal-badge">Config</span>
           <div>
             <div class="modal-titulo">Personaliza tu web</div>
-            <div class="modal-subtitulo">Los cambios se aplican en tiempo real en la web de abajo</div>
+            <div class="modal-subtitulo">Configura y pulsa "Aplicar" para guardar en sesión</div>
           </div>
         </div>
-        <button class="modal-btn-ver" onclick="cerrarModal()">Ver mi web →</button>
+        <button type="submit" class="modal-btn-ver">Aplicar configuración →</button>
       </div>
+      <input type="hidden" name="modo" id="modoHidden" value="<?php echo htmlspecialchars($modoSesion); ?>">
 
       <div class="config-cuerpo">
 
@@ -1349,14 +235,14 @@ $hot_ventas = array(
 
           <div class="config-campo">
             <label for="inputNombre">Nombre de la empresa</label>
-            <input type="text" id="inputNombre" placeholder="<?php echo htmlspecialchars($nombre_empresa); ?>"
-              oninput="actualizarNombre(this.value)">
+            <input type="text" id="inputNombre" name="nombreEmpresa" placeholder="<?php echo htmlspecialchars($nombre_empresa); ?>"
+              value="<?php echo htmlspecialchars($nombreSesion); ?>" oninput="actualizarNombre(this.value)">
           </div>
 
           <div class="config-campo">
             <label for="inputDesc">Descripción (hero)</label>
-            <textarea id="inputDesc" placeholder="<?php echo htmlspecialchars($descripcion); ?>"
-              oninput="actualizarDesc(this.value)"></textarea>
+            <textarea id="inputDesc" name="descripcion" placeholder="<?php echo htmlspecialchars($descripcion); ?>"
+              oninput="actualizarDesc(this.value)"><?php echo htmlspecialchars($descSesion); ?></textarea>
           </div>
         </div>
 
@@ -1366,22 +252,22 @@ $hot_ventas = array(
           <p style="font-size:0.72em;color:var(--txt-3);margin-bottom:18px;">Solo se muestran las secciones marcadas</p>
 
           <label class="check-item">
-            <input type="checkbox" id="chkConcepto" checked
+            <input type="checkbox" id="chkConcepto" name="chkConcepto" value="1" <?php echo $verConcepto ? 'checked' : ''; ?>
               onchange="toggleSeccion('quees', ['navConcepto','menuConcepto','footerConcepto'], this.checked)">
             <span>Quiénes somos</span>
           </label>
           <label class="check-item">
-            <input type="checkbox" id="chkGaleria" checked
+            <input type="checkbox" id="chkGaleria" name="chkGaleria" value="1" <?php echo $verGaleria ? 'checked' : ''; ?>
               onchange="toggleSeccion('galeriaGroup', ['navGaleria','menuGaleria','footerGaleria'], this.checked)">
             <span>Galería / Hot Ventas</span>
           </label>
           <label class="check-item">
-            <input type="checkbox" id="chkTaller" checked
+            <input type="checkbox" id="chkTaller" name="chkTaller" value="1" <?php echo $verTaller ? 'checked' : ''; ?>
               onchange="toggleSeccion('taller', ['navTaller','menuTaller','footerTaller'], this.checked)">
             <span>Taller</span>
           </label>
           <label class="check-item">
-            <input type="checkbox" id="chkContacto" checked
+            <input type="checkbox" id="chkContacto" name="chkContacto" value="1" <?php echo $verContacto ? 'checked' : ''; ?>
               onchange="toggleSeccion('contactoGroup', ['navContacto','menuContacto'], this.checked)">
             <span>Contacto / Newsletter</span>
           </label>
@@ -1394,35 +280,36 @@ $hot_ventas = array(
           <div class="config-campo">
             <label>Color principal</label>
             <div class="color-wrap">
-              <input type="color" id="colorPicker" value="#d4af37" oninput="actualizarColor(this.value)">
-              <span class="color-hex" id="colorHex">#d4af37</span>
+              <input type="color" id="colorPicker" name="colorPrincipal" value="<?php echo htmlspecialchars($colorSesion); ?>" oninput="actualizarColor(this.value)">
+              <span class="color-hex" id="colorHex"><?php echo htmlspecialchars($colorSesion); ?></span>
             </div>
           </div>
 
           <div class="config-campo">
             <label for="fontSelect">Fuente de párrafos</label>
-            <select id="fontSelect" onchange="actualizarFuente(this.value)">
-              <option value="Inter">Inter</option>
-              <option value="Montserrat">Montserrat</option>
-              <option value="Raleway">Raleway</option>
-              <option value="Roboto">Roboto</option>
-              <option value="Lato">Lato</option>
-              <option value="Poppins">Poppins</option>
-              <option value="Oswald">Oswald</option>
-              <option value="Playfair Display">Playfair Display</option>
+            <select id="fontSelect" name="fuente" onchange="actualizarFuente(this.value)">
+              <option value="Inter" <?php echo $fuenteSesion === 'Inter' ? 'selected' : ''; ?>>Inter</option>
+              <option value="Montserrat" <?php echo $fuenteSesion === 'Montserrat' ? 'selected' : ''; ?>>Montserrat</option>
+              <option value="Raleway" <?php echo $fuenteSesion === 'Raleway' ? 'selected' : ''; ?>>Raleway</option>
+              <option value="Roboto" <?php echo $fuenteSesion === 'Roboto' ? 'selected' : ''; ?>>Roboto</option>
+              <option value="Lato" <?php echo $fuenteSesion === 'Lato' ? 'selected' : ''; ?>>Lato</option>
+              <option value="Poppins" <?php echo $fuenteSesion === 'Poppins' ? 'selected' : ''; ?>>Poppins</option>
+              <option value="Oswald" <?php echo $fuenteSesion === 'Oswald' ? 'selected' : ''; ?>>Oswald</option>
+              <option value="Playfair Display" <?php echo $fuenteSesion === 'Playfair Display' ? 'selected' : ''; ?>>Playfair Display</option>
             </select>
           </div>
 
           <div class="config-campo">
             <label>Modo</label>
             <div class="modo-toggle">
-              <button class="modo-btn activo" id="btnOscuro" onclick="setModo('oscuro')">🌙 Oscuro</button>
-              <button class="modo-btn" id="btnClaro" onclick="setModo('claro')">☀️ Claro</button>
+              <button type="button" class="modo-btn <?php echo $modoSesion !== 'claro' ? 'activo' : ''; ?>" id="btnOscuro" onclick="setModo('oscuro')">🌙 Oscuro</button>
+              <button type="button" class="modo-btn <?php echo $modoSesion === 'claro' ? 'activo' : ''; ?>" id="btnClaro" onclick="setModo('claro')">☀️ Claro</button>
             </div>
           </div>
         </div>
 
       </div>
+      </form>
     </div>
   </div>
 
@@ -1437,10 +324,11 @@ $hot_ventas = array(
         <a href="#" id="headerLogoText"><?php echo htmlspecialchars($nombre_empresa); ?></a>
       </div>
       <nav id="nav">
-        <a href="#quees" id="navConcepto">Concepto</a>
-        <a href="#hot" id="navGaleria">Hot Ventas</a>
-        <a href="#taller" id="navTaller">Taller</a>
-        <a href="#contacto" id="navContacto">Contacto</a>
+        <a href="#quees" id="navConcepto" <?php echo !$verConcepto ? 'style="display:none"' : ''; ?>>Concepto</a>
+        <a href="#hot" id="navGaleria" <?php echo !$verGaleria ? 'style="display:none"' : ''; ?>>Hot Ventas</a>
+        <a href="#taller" id="navTaller" <?php echo !$verTaller ? 'style="display:none"' : ''; ?>>Taller</a>
+        <a href="#contacto" id="navContacto" <?php echo !$verContacto ? 'style="display:none"' : ''; ?>>Contacto</a>
+        <a href="logout.php" style="color:var(--color-principal);font-weight:600;">Cerrar sesión</a>
       </nav>
       <div class="header-icons">
         <button class="menu-btn" id="menuBtn" onclick="toggleMenu()">
@@ -1454,6 +342,7 @@ $hot_ventas = array(
       <a href="#hot" id="menuGaleria" onclick="toggleMenu()">Hot Ventas</a>
       <a href="#taller" id="menuTaller" onclick="toggleMenu()">Taller</a>
       <a href="#contacto" id="menuContacto" onclick="toggleMenu()">Contacto</a>
+      <a href="logout.php" style="color:var(--color-principal);font-weight:600;">Cerrar sesión</a>
     </div>
   </header>
 
@@ -1484,7 +373,7 @@ $hot_ventas = array(
   </div>
 
   <!-- QUIENES SOMOS -->
-  <section id="quees" class="seccion-concepto">
+  <section id="quees" class="seccion-concepto" <?php echo !$verConcepto ? 'style="display:none"' : ''; ?>>
     <div class="concepto-header">
       <p class="seccion-tag">01 — El concepto</p>
       <h2 class="seccion-titulo">¿Qué es <?php echo htmlspecialchars($nombre_empresa); ?>?</h2>
@@ -1520,7 +409,7 @@ $hot_ventas = array(
   </section>
 
   <!-- GALERIA Y HOT VENTAS - envuelto en div para poder ocultarlo con el configurador -->
-  <div id="galeriaGroup">
+  <div id="galeriaGroup" <?php echo !$verGaleria ? 'style="display:none"' : ''; ?>>
     <section id="hot" class="seccion-hot">
       <div class="hot-header">
         <p class="seccion-tag">02 — Boutique™</p>
@@ -1559,7 +448,7 @@ $hot_ventas = array(
   </div>
 
   <!-- TALLER -->
-  <section id="taller" class="seccion-taller">
+  <section id="taller" class="seccion-taller" <?php echo !$verTaller ? 'style="display:none"' : ''; ?>>
     <div class="taller-header">
       <p class="seccion-tag">03 — Workshop</p>
       <h2 class="seccion-titulo">El Taller</h2>
@@ -1617,7 +506,7 @@ $hot_ventas = array(
   </section>
 
   <!-- CONTACTO / NEWSLETTER -->
-  <div id="contactoGroup">
+  <div id="contactoGroup" <?php echo !$verContacto ? 'style="display:none"' : ''; ?>>
     <section class="seccion-newsletter" id="contacto">
       <div class="newsletter-inner">
         <h3>Únete a la newsletter de <?php echo htmlspecialchars($nombre_empresa); ?></h3>
@@ -1806,9 +695,18 @@ $hot_ventas = array(
       document.body.style.overflow = "hidden";
     }
 
+    // solo abro el modal automaticamente si NO es un POST
+    // asi cuando le da a aplicar configuracion se cierra y se ve la web
+    <?php if ($_SERVER['REQUEST_METHOD'] != 'POST') { ?>
     window.addEventListener("load", function () {
       abrirModal();
     });
+    <?php } else { ?>
+    // si es POST, muestro el boton de editar para que pueda volver a abrir el modal
+    window.addEventListener("load", function () {
+      document.getElementById("btnEditar").classList.add("visible");
+    });
+    <?php } ?>
 
     function subirLogo(e) {
       var file = e.target.files[0];
@@ -1877,6 +775,7 @@ $hot_ventas = array(
     }
 
     function setModo(modo) {
+      document.getElementById("modoHidden").value = modo;
       if (modo === "claro") {
         document.body.classList.add("modo-claro");
         document.getElementById("btnClaro").classList.add("activo");
